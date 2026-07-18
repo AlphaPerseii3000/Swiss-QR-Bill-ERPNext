@@ -12,6 +12,9 @@
  * @param {String} customerAddressCode Customer Address Code
  * @returns Address Configuration
  */
+// Joins non-empty address parts with a space, ignoring null/undefined/"".
+const joinAddress = (...parts) => parts.filter((p) => p && String(p).trim()).join(" ");
+
 export const generateQRConfig = (
   currency,
   amount,
@@ -28,18 +31,18 @@ export const generateQRConfig = (
   amount,
   reference,
   creditor: {
-    name: company, //
-    address: `${companyAddress.address_line1} ${companyAddress.address_line2}`, // Address Line 1 & line 2
-    zip: parseInt(companyAddress.pincode), // Bank Account  Code
-    city: companyAddress.city, // Bank Account City
-    account: iban, // Bank Account Iban
-    country: companyAddressCode, // Bank Country
+    name: company,
+    address: joinAddress(companyAddress.address_line1, companyAddress.address_line2),
+    zip: parseInt(companyAddress.pincode),
+    city: companyAddress.city,
+    account: iban,
+    country: companyAddressCode,
   },
   debtor: {
-    name: customer, // Customer Doctype
-    address: `${customerAddress.address_line1} ${customerAddress.address_line2}`, // Address Line 1 & 2
-    zip: customerAddress.pincode, // Sales Invoice PCode
-    city: customerAddress.city, // Sales Invoice City
-    country: customerAddressCode, // Sales Invoice Country
+    name: customer,
+    address: joinAddress(customerAddress.address_line1, customerAddress.address_line2),
+    zip: customerAddress.pincode,
+    city: customerAddress.city,
+    country: customerAddressCode,
   },
 });

@@ -33,7 +33,7 @@ const buildSchedule = (doc) => {
 
 export const createQRBill = async (frm) => {
   showProgress(5, "getting data...");
-  const customer = frm.doc.customer;
+  const customer = frm.doc.customer_name || frm.doc.customer;
   const company = frm.doc.company;
   const language = getLanguageCode(frm.doc.language);
   const currency = getCurrency(frm.doc.currency);
