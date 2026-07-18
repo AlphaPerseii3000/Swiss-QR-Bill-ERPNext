@@ -25,10 +25,12 @@ window.frappe.ui.form.on("Sales Invoice", {
     const scheduleCount =
       frm.doc.payment_schedule && frm.doc.payment_schedule.length;
     const label = scheduleCount && scheduleCount > 1
-      ? `Create QR Bill (${scheduleCount} echeances)`
-      : "Create QR Bill";
+      ? __("Create QR Bill ({0} echeances)", [scheduleCount])
+      : __("Create QR Bill");
+    // Remove existing button to avoid duplicates on re-render
+    frm.remove_custom_button(label, __("Actions"));
     frm.add_custom_button(label, function () {
       createQRBill(frm);
-    });
+    }, __("Actions"));
   },
 });
