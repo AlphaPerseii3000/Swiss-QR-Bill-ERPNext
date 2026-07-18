@@ -1,11 +1,15 @@
-import { calculateQRReferenceChecksum } from "swissqrbill/utils";
+import {
+  calculateQRReferenceChecksum,
+  calculateSCORReferenceChecksum,
+  isQRIBAN,
+} from "swissqrbill/utils";
 import { FRAPPE_FILE_UPLOAD_ENDPOINT } from "./constant";
 import { updateMessage } from "./message";
 
 /**
  * Shows Progress Bar For Uploading QR Bill
  * @param {Number} current Current Progress
- * @param {String} description Desciption
+ * @param {String} description Description
  */
 export const showProgress = (current, description) => {
   const title = updateMessage;
@@ -85,10 +89,10 @@ export const getLanguageCode = (language) => {
   }
 
   if (
-    (language === "en") |
-    (language === "fr") |
-    (language === "it") |
-    (language === "de")
+    language === "en" ||
+    language === "fr" ||
+    language === "it" ||
+    language === "de"
   ) {
     return language.toUpperCase();
   }
@@ -111,16 +115,55 @@ export const getDocument = async (doctype, docname) => {
 };
 
 /**
- * Calculates and Returns Reference Code
- * @param {String} docname DocumentName
- * @returns {String} Reference Code
+ * Generates a reference code for a QR bill.
+ * For QR-IBAN (IID 30000-31999): generates a QRR reference (27 numeric digits with mod10 checksum).
+ * For regular IBAN: generates a SCOR reference (RF + mod97 checksum + alphanumeric base, max 25 chars).
+ *
+ * @param {String} docname Document name (e.g. ACC-SINV-2026-00001)
+ * @param {String} iban The creditor IBAN (used to determine QRR vs SCOR)
+ * @param {Number} scheduleIndex Optional 1-based schedule index for multi-schedule invoices
+ * @returns {String} Reference code (QRR 27 digits or SCOR RF...)
  */
-export const getReferenceCode = (docname) => {
-  const _ref = docname.split("-").join("");
-  const ref = _ref.substr(_ref.length - 7);
-  const _reference = `0000000000000000000${ref}`;
-  const checksum = calculateQRReferenceChecksum(_reference);
-  return `${_reference}${checksum}`;
+export const getReferenceCode = (docname, iban, scheduleIndex = 0) => {
+  const scheduleSuffix =
+    scheduleIndex > 0 ? scheduleIndex.toString().padStart(2, "0") : "";
+
+  if (isQRIBAN(iban)) {
+    // QRR reference: 26 digits + 1 mod10 checksum digit = 27 total
+    const digits = docname.replace(/\D/g, "");
+    const base = `${digits}${scheduleSuffix}`;
+    const padded = base.padStart(26, "0").substring(0, 26);
+    const checksum = calculateQRReferenceChecksum(padded);
+    return `${padded}${checksum}`;
+  } else {
+    // SCOR reference: RF + 2-digit mod97 checksum + alphanumeric base (max 25 total)
+    const alphaNum = docname
+      .split("-")
+      .join("")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+    const base = `${alphaNum}${scheduleSuffix}`.substring(0, 21);
+    const checksum = calculateSCORReferenceChecksum(base);
+    return `RF${checksum}${base}`;
+  }
+};
+
+/**
+ * Formats a date string (YYYY-MM-DD) into a human-readable format.
+ * @param {String} dateStr Date in YYYY-MM-DD format
+ * @param {String} language Language code (FR, DE, EN, IT)
+ * @returns {String} Formatted date
+ */
+export const formatDate = (dateStr, language = "FR") => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr + "T00:00:00");
+  const localeMap = { FR: "fr-CH", DE: "de-CH", EN: "en-CH", IT: "it-CH" };
+  const locale = localeMap[language] || "fr-CH";
+  return date.toLocaleDateString(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 };
 
 /**

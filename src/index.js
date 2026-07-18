@@ -7,15 +7,27 @@ window.frappe.ui.form.on("Sales Invoice", {
   },
 
   onload: (frm) => {
-    frm.doc.esr_reference_code = "";
+    // esr_reference_code is now generated per-schedule at QR-bill generation time
+    // (multi-schedule invoices need distinct references per schedule).
+    if (!frm.doc.esr_reference_code) {
+      frm.doc.esr_reference_code = "";
+    }
   },
 
   before_submit: (frm) => {
-    const reference = getReferenceCode(frm.doc.name);
+    // Legacy single reference for backward compat with the esr_reference_code field.
+    // Multi-schedule references are generated with a per-schedule suffix at generation time.
+    const reference = getReferenceCode(frm.doc.name, "", 0);
     frm.doc.esr_reference_code = reference;
   },
+
   refresh: (frm) => {
-    frm.add_custom_button("Create QR Bill", function () {
+    const scheduleCount =
+      frm.doc.payment_schedule && frm.doc.payment_schedule.length;
+    const label = scheduleCount && scheduleCount > 1
+      ? `Create QR Bill (${scheduleCount} echeances)`
+      : "Create QR Bill";
+    frm.add_custom_button(label, function () {
       createQRBill(frm);
     });
   },
