@@ -1,3 +1,8 @@
+> **Fork personnel — travail sur la branche `version-16`** (branche par défaut de ce fork).
+> Adaptations pour ERPNext v16 et génération d'**une page QR-bill par échéance** du
+> `payment_schedule` d'une Sales Invoice, avec référence SCOR unique (IBAN, pas QR-IBAN).
+> PR ouverte en amont : venku31/Swiss-QR-Bill-ERPNext « Version 16 ». Amont : Grynn GmbH (GPL-3.0).
+
 #  Swiss QR Bill for ERPNext (www.grynn.ch)
 
 ![Swiss QR Bill Types](https://user-images.githubusercontent.com/23282682/116856072-c201be80-abfa-11eb-85e8-4a91ec53334b.jpg)
